@@ -1,0 +1,102 @@
+import React, { useState, useEffect } from 'react';
+import Sidenav from '../Dashboard/Sidenav';
+import Navbar from '../Dashboard/Navbar';
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import axios from 'axios';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { useNavigate } from 'react-router-dom';
+
+const Users = () => {
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState([]);
+  const API_BASE_URL = process.env.REACT_APP_API_URL;  // Fallback to localhost if not set
+
+  useEffect(() => {
+    // Fetch token from localStorage when component mounts
+    const adminToken = localStorage.getItem('adminToken');
+
+    if (!adminToken) {
+      // If token doesn't exist, navigate to Adminlogin
+      navigate('/Adminlogin');
+    }
+  }, [navigate]); // Added navigate to dependency array
+
+  const fetchUserData = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/users`);  // Use API_BASE_URL here
+      setUserData(response.data);
+    } catch (error) {
+      console.error('Error fetching user data:', error.response ? error.response.data.message : error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/usersdel/${userId}`);  // Use API_BASE_URL here
+      console.log(`Delete user with ID: ${userId}`);
+      fetchUserData();
+    } catch (error) {
+      console.error('Error deleting user:', error.response ? error.response.data.message : error.message);
+    }
+  };
+
+  const handleStatusToggle = async (userId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+      await axios.put(`${API_BASE_URL}/api/users/${userId}/status`, { status: newStatus });  // Use API_BASE_URL here
+      console.log(`User status updated for ID ${userId} to ${newStatus}`);
+      fetchUserData();
+    } catch (error) {
+      console.error('Error updating user status:', error.response ? error.response.data.message : error.message);
+    }
+  };
+
+  return (
+    <>
+      <Navbar />
+      <Box height={30} />
+
+      <Box sx={{ display: 'flex' }}>
+        <Sidenav />
+        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+          <h1>User Management</h1>
+
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Username</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Action</TableCell>
+                  <TableCell>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {userData?.map((user) => (
+                  <TableRow key={user._id}>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <button onClick={() => handleDeleteUser(user._id)}><DeleteForeverIcon /></button>
+                    </TableCell>
+                    <TableCell>
+                      <button onClick={() => handleStatusToggle(user._id, user.status)}>
+                        {user.status === 'Active' ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      </Box>
+    </>
+  );
+};
+
+export default Users;
