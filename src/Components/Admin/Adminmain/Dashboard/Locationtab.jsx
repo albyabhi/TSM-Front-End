@@ -53,7 +53,7 @@ const Locationtab = () => {
 
     fetchNations();
     fetchLocations(); // Fetch locations on component mount
-  }, [API_BASE_URL]);
+  }, [fetchLocations]);
 
   const fetchStates = async (nationId) => {
     try {

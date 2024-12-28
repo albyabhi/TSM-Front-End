@@ -10,12 +10,13 @@ import {
   Toolbar,
   TextField,
   InputLabel,
+  Alert,
+  Slide,
 } from "@mui/material";
 import Logo from "../Assets/main.png";
 import Bgimage from "../Assets/pg.png";
-import Alert from "@mui/material/Alert";
-import Slide from "@mui/material/Slide";
 
+// Styled Components
 const StyledBgImage = styled(Box)(({ theme }) => ({
   backgroundImage: `url(${Bgimage})`,
   backgroundSize: "cover",
@@ -24,22 +25,21 @@ const StyledBgImage = styled(Box)(({ theme }) => ({
   height: "100vh",
   display: "flex",
   flexDirection: "column",
-  justifyContent: "center", // Center items horizontally
-  alignItems: "center", // Center items vertically
-  margin: 0,
+  justifyContent: "center",
+  alignItems: "center",
 }));
 
 const Wrapper = styled(Box)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  padding: "1.5rem 1.5rem 0.75rem 1.5rem",
-  backgroundColor: `rgba(255, 255, 255, 0.3)`, // Adjust the opacity as needed
+  padding: "1.5rem",
+  backgroundColor: `rgba(255, 255, 255, 0.3)`,
   borderRadius: "0.75rem",
-  backdropFilter: "blur(4px)", // Apply blur effect
-  boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.1)", // Add shadow for depth
-  maxWidth: "300px", // Match the maxWidth of the login form
-  margin: "auto", // Center the Wrapper
+  backdropFilter: "blur(4px)",
+  boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.1)",
+  maxWidth: "300px",
+  margin: "auto",
 }));
 
 const FormContainer = styled(Box)({
@@ -53,34 +53,32 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   top: 0,
   left: 0,
   right: 0,
-  backgroundColor: "transparent", // Set the background to transparent
-  boxShadow: "none", // Remove the box shadow
-  zIndex: theme.zIndex.drawer + 1,
+  backgroundColor: "transparent",
+  boxShadow: "none",
 }));
 
 const AboutSection = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main, // Set the maximum width of the About section
-  margin: "2rem auto", // Center the About Section
+  backgroundColor: theme.palette.primary.main,
   padding: "1.5rem",
-  margin: 0,
 }));
 
 const AboutContent = styled(Box)({
-  textAlign: "center", // Center align content
+  textAlign: "center",
 });
 
 const CenteredLogo = styled("div")({
   display: "flex",
   alignItems: "center",
-  flexGrow: 1, // Grow to fill the available space
+  flexGrow: 1,
 });
 
+// Signup Component
 const Signup = () => {
   const navigate = useNavigate();
-  const apiUrl = process.env.REACT_APP_API_URL; // Using the apiUrl from environment variables
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   const [signupError, setSignupError] = useState("");
-  const [signupSuccess, setsignupSuccess] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [userData, setUserData] = useState({
     username: "",
     email: "",
@@ -98,14 +96,11 @@ const Signup = () => {
         throw new Error("Password must be at least 8 characters long.");
       }
 
-      const response = await axios.post(`${apiUrl}/api/signup`, userData); // Use apiUrl here
+      const response = await axios.post(`${apiUrl}/api/signup`, userData);
 
       if (response && response.data) {
-        setsignupSuccess(true);
-        console.log(response.data);
-        setTimeout(() => {
-          navigate("/login");
-        }, 1500);
+        setSignupSuccess(true);
+        setTimeout(() => navigate("/login"), 1500);
       } else {
         console.error("Signup failed: No data in response");
       }
@@ -114,13 +109,13 @@ const Signup = () => {
         "Signup failed:",
         error.response ? error.response.data.message : error.message
       );
-      setSignupError(error.message); // Assuming you have state for signupError
+      setSignupError(error.message);
     }
   };
 
   return (
     <>
-      <StyledAppBar position="static">
+      <StyledAppBar>
         <Toolbar>
           <Box flexGrow={1} />
           <CenteredLogo>
@@ -138,79 +133,77 @@ const Signup = () => {
           display="flex"
           flexDirection="column"
           minHeight="100vh"
-          position="relative" // Add position relative to the parent container
+          position="relative"
         >
-          {" "}
-          {/* Content */}
-          <Box position="absolute" top="10px" width="100%" zIndex="9999">
+          {/* Alert Section */}
+          <Box
+            position="absolute"
+            top="10px"
+            width="100%"
+            zIndex="9999"
+            display="flex"
+            justifyContent="center"
+          >
             <Slide
               direction="down"
               in={signupSuccess}
               mountOnEnter
               unmountOnExit
               timeout={{ enter: 1000, exit: 500 }}
-              style={{ display: "flex", justifyContent: "center", margin: "30px" }}
             >
               <Alert variant="filled" severity="success" color="secondary">
                 Signup Successful
               </Alert>
             </Slide>
           </Box>
-          <Box
-            display="flex"
-            flex={1}
-            justifyContent="center"
-            alignItems="center"
-          >
+
+          {/* Signup Form */}
+          <Box display="flex" flex={1} justifyContent="center" alignItems="center">
             <Wrapper>
               <Typography variant="h5" gutterBottom>
                 Sign Up
               </Typography>
 
               <FormContainer>
-                <InputLabel>username</InputLabel>
+                <InputLabel>Username</InputLabel>
                 <TextField
                   type="text"
                   name="username"
-                  className="sign-up-input"
                   onChange={handleInputChange}
-                  variant="outlined" // Add outlined variant
-                  fullWidth // Take full width
+                  variant="outlined"
+                  fullWidth
                 />
                 <InputLabel>Email</InputLabel>
                 <TextField
                   type="email"
                   name="email"
-                  className="sign-up-input"
                   onChange={handleInputChange}
-                  variant="outlined" // Add outlined variant
-                  fullWidth // Take full width
+                  variant="outlined"
+                  fullWidth
                 />
-                <InputLabel>password</InputLabel>
+                <InputLabel>Password</InputLabel>
                 <TextField
                   type="password"
                   name="password"
-                  className="sign-up-input"
                   onChange={handleInputChange}
-                  variant="outlined" // Add outlined variant
-                  fullWidth // Take full width
+                  variant="outlined"
+                  fullWidth
                 />
                 <Button
                   variant="contained"
                   color="primary"
-                  className="sign-up-button"
                   onClick={handleSignup}
                 >
                   Sign Up
                 </Button>
 
                 {signupError && (
-                  <Typography variant="body2" >
+                  <Typography variant="body2" color="error">
                     {signupError}
                   </Typography>
                 )}
 
-                <Typography variant="body2" style={{ textAlign: "center" }}>
+                <Typography variant="body2" textAlign="center">
                   Already a user? <Link to="/login">Login</Link>
                 </Typography>
               </FormContainer>
@@ -218,20 +211,18 @@ const Signup = () => {
           </Box>
         </Box>
       </StyledBgImage>
+
       {/* About Section */}
       <AboutSection>
         <AboutContent>
           <Typography variant="h6" gutterBottom>
             About NomadGram
           </Typography>
-        </AboutContent>
-        <AboutContent>
           <Typography variant="body1" gutterBottom>
             NomadGram is a social media platform for travelers, allowing users
             to share posts with images, location descriptions, and travel
             guides.
           </Typography>
-          
           <Typography variant="body2">© 2024 From NomadGram</Typography>
         </AboutContent>
       </AboutSection>
