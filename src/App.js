@@ -51,9 +51,9 @@ function App() {
       }
       setLoading(false);
     };
-
+  
     checkToken();
-  }, []); // Added apiUrl dependency to recheck on any change
+  }, [apiUrl]); // Add apiUrl as a dependency
 
   if (loading) {
     return <div>Loading...</div>; // Render a loading indicator while checking the token

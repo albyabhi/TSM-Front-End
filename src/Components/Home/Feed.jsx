@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
 import PostWidget from './Widgets/PostWidget';
 import axios from 'axios';
@@ -8,10 +8,10 @@ const Feed = ({ onRefreshUser }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rotation, setRotation] = useState(0);
-  const apiUrl = process.env.REACT_APP_API_URL; // Using apiUrl from environment variables
+  const apiUrl = process.env.REACT_APP_API_URL; // Fallback API URL if not defined in env
 
-  // Function to fetch posts
-  const fetchPosts = async () => {
+  // Function to fetch posts, wrapped with useCallback to avoid unnecessary re-creations
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${apiUrl}/posts/all`); // Using dynamic API URL
@@ -26,7 +26,7 @@ const Feed = ({ onRefreshUser }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl]); // Only re-create fetchPosts when apiUrl changes
 
   // Handle refresh button click
   const handleClick = () => {
@@ -37,7 +37,7 @@ const Feed = ({ onRefreshUser }) => {
   // Fetch posts on component mount
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [fetchPosts]); // Now the warning should be resolved
 
   return (
     <Box flex={4} padding={2}>
@@ -62,7 +62,13 @@ const Feed = ({ onRefreshUser }) => {
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center">
           <CircularProgress
-            style={{ color: 'black', position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+            style={{
+              color: 'black',
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
             size={40}
           />
         </Box>

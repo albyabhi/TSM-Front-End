@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   IconButton,
   Grid,
@@ -48,7 +48,7 @@ const MainProfile = () => {
   const [showDeleteButtons, setShowDeleteButtons] = useState(false);
   const navigate = useNavigate();
   const { userId } = useParams();
-  const apiUrl = process.env.REACT_APP_API_URL;
+  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000'; // Ensure a fallback API URL
 
   const token = localStorage.getItem("token");
 
@@ -65,22 +65,26 @@ const MainProfile = () => {
         const profileResponse = await axios.get(`${apiUrl}/api/user/${userId}`);
         setProfileData(profileResponse.data);
 
-        // Fetch user posts
-        const postsResponse = await axios.get(`${apiUrl}/posts/user/${userId}`);
-        setPosts(postsResponse.data);
+        // Fetch user posts if "Posts" tab is selected
+        if (tabValue === 0) {
+          const postsResponse = await axios.get(`${apiUrl}/posts/user/${userId}`);
+          setPosts(postsResponse.data);
+        }
 
         // Fetch user travel guides if the "Travel Guides" tab is selected
-        const travelGuidesResponse = await axios.get(
-          `${apiUrl}/tg/fetchByUserId/${userId}`
-        );
-        setTravelGuides(travelGuidesResponse.data);
+        if (tabValue === 1) {
+          const travelGuidesResponse = await axios.get(
+            `${apiUrl}/tg/fetchByUserId/${userId}`
+          );
+          setTravelGuides(travelGuidesResponse.data);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
-  }, [userId, tabValue, apiUrl]);
+  }, [userId, tabValue, apiUrl]); // Dependencies include userId, tabValue, and apiUrl
 
   const handleDeleteClick = async (postId) => {
     try {
@@ -327,25 +331,28 @@ const MainProfile = () => {
                                       paddingTop: "100%",
                                     }}
                                   >
-                                    {guide.image && (
-                                      <img
-                                        src={`data:${guide.image.contentType};base64,${guide.image.data}`}
-                                        alt="Guide"
-                                        style={{
-                                          position: "absolute",
-                                          top: 0,
-                                          left: 0,
-                                          width: "100%",
-                                          height: "100%",
-                                          objectFit: "cover",
-                                          borderRadius: "15px",
-                                        }}
-                                      />
-                                    )}
+                                    <img
+                                      src={`data:${guide.coverImage.contentType};base64,${guide.coverImage.data}`}
+                                      alt="Cover"
+                                      style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        left: 0,
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                        borderRadius: "15px",
+                                      }}
+                                    />
                                   </div>
                                   <Typography
                                     variant="h6"
-                                    style={{ margin: "10px", fontWeight: "bold" }}
+                                    style={{
+                                      position: "absolute",
+                                      bottom: "10px",
+                                      left: "10px",
+                                      color: "white",
+                                    }}
                                   >
                                     {guide.title}
                                   </Typography>
@@ -366,7 +373,9 @@ const MainProfile = () => {
                               </Grid>
                             ))
                           ) : (
-                            <CircularProgress />
+                            <Typography variant="body2" style={{ marginTop: "10px" }}>
+                              No Travel Guides Available
+                            </Typography>
                           )}
                         </Grid>
                       </div>

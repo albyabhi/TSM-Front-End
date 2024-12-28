@@ -8,9 +8,7 @@ const ProfileEd = () => {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const [userData, setUserData] = useState(null);
   const [bio, setBio] = useState("");
-  const [highlightedPlaces, setHighlightedPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -36,8 +34,6 @@ const ProfileEd = () => {
   };
 
   useEffect(() => {
-    let isMounted = true;
-
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -51,13 +47,11 @@ const ProfileEd = () => {
           headers: { Authorization: token },
         });
 
-        setUserData(response.data);
         setUserName(response.data.username || "");
         setFirstName(response.data.firstName || "");
         setLastName(response.data.lastName || "");
         setPhoneNumber(response.data.phoneNumber || "");
         setBio(response.data.bio || "");
-        setHighlightedPlaces(response.data.highlightedPlaces || "");
 
         const profileResponse = await axios.get(`${apiUrl}/api/profiledata`, {
           headers: { Authorization: token },
@@ -66,7 +60,9 @@ const ProfileEd = () => {
         setProfilePicture(profileResponse.profilePicture || null);
 
         if (profileResponse.data && profileResponse.data.profilePicture) {
-          const imageDataUri = `data:${profileResponse.data.profilePicture.contentType};base64,${profileResponse.data.profilePicture.data.toString("base64")}`;
+          const imageDataUri = `data:${
+            profileResponse.data.profilePicture.contentType
+          };base64,${profileResponse.data.profilePicture.data.toString("base64")}`;
           setSavedImage(imageDataUri);
         }
 
@@ -89,11 +85,7 @@ const ProfileEd = () => {
     };
 
     fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [navigate]);
+  }, [apiUrl, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -120,7 +112,7 @@ const ProfileEd = () => {
     };
 
     fetchLocations();
-  }, [navigate]);
+  }, [apiUrl]);
 
   const handleSubmitChanges = async () => {
     try {

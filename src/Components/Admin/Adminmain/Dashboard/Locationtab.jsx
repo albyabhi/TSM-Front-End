@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Button,
@@ -29,38 +29,34 @@ const Locationtab = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [location, setLocation] = useState("");
   const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const fetchLocations = async () => {
+  // Fetch Nations and Locations
+  const fetchData = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/map/allfetchlocations`);
-      setLocations(response.data);
+      setLoading(true); // Set loading state to true while fetching
+      const nationsResponse = await axios.get(`${API_BASE_URL}/map/fetchnations`);
+      setNations(nationsResponse.data);
+      const locationsResponse = await axios.get(`${API_BASE_URL}/map/allfetchlocations`);
+      setLocations(locationsResponse.data);
     } catch (error) {
-      console.error("Error fetching locations:", error.message);
-      setAlertMessage("Failed to fetch locations.");
+      console.error("Error fetching data:", error.message);
+      setAlertMessage("Failed to fetch data.");
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
-  };
+  }, [API_BASE_URL]); // Add API_BASE_URL to the dependency array
 
   useEffect(() => {
-    const fetchNations = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/map/fetchnations`);
-        setNations(response.data);
-      } catch (error) {
-        console.error("Error fetching nations:", error.message);
-        setAlertMessage("Failed to fetch nations.");
-      }
-    };
-
-    fetchNations();
-    fetchLocations(); // Fetch locations on component mount
-  }, [fetchLocations]);
+    fetchData();
+  }, [fetchData]); // Add fetchData to the dependency array
 
   const fetchStates = async (nationId) => {
     try {
-      const response = await axios.get(
+      const { data } = await axios.get(
         `${API_BASE_URL}/map/fetchstates?nation=${nationId}`
       );
-      setStates(response.data);
+      setStates(data);
     } catch (error) {
       console.error("Error fetching states:", error.message);
       setAlertMessage("Failed to fetch states.");
@@ -70,7 +66,6 @@ const Locationtab = () => {
   const handleNationChange = async (nationId) => {
     setSelectedNation(nationId);
     await fetchStates(nationId);
-    await fetchLocations();
   };
 
   const handleAddLocation = async () => {
@@ -84,14 +79,14 @@ const Locationtab = () => {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/map/locations`, {
+      await axios.post(`${API_BASE_URL}/map/locations`, {
         nationid: selectedNation,
         stateid: selectedState,
         locationName: location,
       });
-      setLocation("");
+      setLocation(""); // Reset location input field
       setAlertMessage("Location added successfully.");
-      await fetchLocations();
+      await fetchData(); // Refresh data
     } catch (error) {
       console.error("Error adding location:", error.message);
       setAlertMessage("Failed to add location.");
@@ -120,12 +115,20 @@ const Locationtab = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setAlertMessage("Image uploaded successfully.");
-      await fetchLocations();
+      await fetchData();
     } catch (error) {
       console.error("Error uploading image:", error.message);
       setAlertMessage("Failed to upload image.");
     }
   };
+
+  // Reset alert message after 3 seconds
+  useEffect(() => {
+    if (alertMessage) {
+      const timer = setTimeout(() => setAlertMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [alertMessage]);
 
   return (
     <>
@@ -141,86 +144,92 @@ const Locationtab = () => {
             </Alert>
           )}
 
-          <InputLabel>Nation</InputLabel>
-          <Select
-            value={selectedNation}
-            onChange={(e) => handleNationChange(e.target.value)}
-          >
-            <MenuItem value="defaultNation">Select a nation</MenuItem>
-            {nations.map((nation) => (
-              <MenuItem key={nation._id} value={nation._id}>
-                {nation.name}
-              </MenuItem>
-            ))}
-          </Select>
-
-          <InputLabel>State</InputLabel>
-          <Select
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-          >
-            <MenuItem value="defaultState">Select a state</MenuItem>
-            {states.map((state) => (
-              <MenuItem key={state._id} value={state._id}>
-                {state.name}
-              </MenuItem>
-            ))}
-          </Select>
-
-          <InputLabel>Location Name</InputLabel>
-          <TextField
-            fullWidth
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-
-          <Button variant="contained" onClick={handleAddLocation}>
-            Add Location
-          </Button>
-
-          <TableContainer component={Paper} sx={{ mt: 4 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Location</TableCell>
-                  <TableCell>Image</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {locations.map((loc) => (
-                  <TableRow key={loc._id}>
-                    <TableCell>{loc.name}</TableCell>
-                    <TableCell>
-                      {loc.image ? (
-                        <img
-                          src={`data:${loc.image.contentType};base64,${loc.image.data}`}
-                          alt={loc.name}
-                          style={{ width: "100px" }}
-                        />
-                      ) : (
-                        "No Image"
-                      )}
-                      <input
-                        type="file"
-                        onChange={(e) =>
-                          handleImageUpload(loc._id, e.target.files[0])
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        onClick={() => handleDeleteLocation(loc._id)}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+          {loading ? (
+            <p>Loading...</p> // Loading indicator
+          ) : (
+            <>
+              <InputLabel>Nation</InputLabel>
+              <Select
+                value={selectedNation}
+                onChange={(e) => handleNationChange(e.target.value)}
+              >
+                <MenuItem value="defaultNation">Select a nation</MenuItem>
+                {nations.map((nation) => (
+                  <MenuItem key={nation._id} value={nation._id}>
+                    {nation.name}
+                  </MenuItem>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+              </Select>
+
+              <InputLabel>State</InputLabel>
+              <Select
+                value={selectedState}
+                onChange={(e) => setSelectedState(e.target.value)}
+              >
+                <MenuItem value="defaultState">Select a state</MenuItem>
+                {states.map((state) => (
+                  <MenuItem key={state._id} value={state._id}>
+                    {state.name}
+                  </MenuItem>
+                ))}
+              </Select>
+
+              <InputLabel>Location Name</InputLabel>
+              <TextField
+                fullWidth
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+
+              <Button variant="contained" onClick={handleAddLocation}>
+                Add Location
+              </Button>
+
+              <TableContainer component={Paper} sx={{ mt: 4 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Location</TableCell>
+                      <TableCell>Image</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {locations.map((loc) => (
+                      <TableRow key={loc._id}>
+                        <TableCell>{loc.name}</TableCell>
+                        <TableCell>
+                          {loc.image ? (
+                            <img
+                              src={`data:${loc.image.contentType};base64,${loc.image.data}`}
+                              alt={loc.name}
+                              style={{ width: "100px" }}
+                            />
+                          ) : (
+                            "No Image"
+                          )}
+                          <input
+                            type="file"
+                            onChange={(e) =>
+                              handleImageUpload(loc._id, e.target.files[0])
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="contained"
+                            onClick={() => handleDeleteLocation(loc._id)}
+                          >
+                            Delete
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </Box>
       </Box>
     </>

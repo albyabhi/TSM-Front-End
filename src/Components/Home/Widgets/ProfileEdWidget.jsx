@@ -6,7 +6,6 @@ import { theme } from "../theme";
 import {
   Grid,
   Typography,
-  Input,
   TextField,
   Button,
   IconButton,
@@ -23,7 +22,6 @@ const ProfileEdWidget = ({ onClose }) => {
   const [userData, setUserData] = useState(null);
   const [userId, setUserId] = useState(null);
   const [bio, setBio] = useState("");
-  const [highlightedPlaces, setHighlightedPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -50,8 +48,6 @@ const ProfileEdWidget = ({ onClose }) => {
   };
 
   useEffect(() => {
-    let isMounted = true;
-
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -74,63 +70,47 @@ const ProfileEdWidget = ({ onClose }) => {
             }),
           ]);
 
-        if (isMounted) {
-          setUserData(response.data);
-          setUserName(response.data.username || "");
-          setFirstName(response.data.firstName || "");
-          setLastName(response.data.lastName || "");
-          setPhoneNumber(response.data.phoneNumber || "");
-          setBio(response.data.bio || "");
-          setHighlightedPlaces(response.data.highlightedPlaces || []);
-          setProfilePicture(profileResponse.profilePicture || null);
-          setLoading(false);
+        setUserData(response.data);
+        setUserName(response.data.username || "");
+        setFirstName(response.data.firstName || "");
+        setLastName(response.data.lastName || "");
+        setPhoneNumber(response.data.phoneNumber || "");
+        setBio(response.data.bio || "");
+        setProfilePicture(profileResponse.profilePicture || null);
 
-          if (profileResponse.data && profileResponse.data.profilePicture) {
-            const imageDataUri = `data:${
-              profileResponse.data.profilePicture.contentType
-            };base64,${profileResponse.data.profilePicture.data.toString(
-              "base64"
-            )}`;
-            setSavedImage(imageDataUri);
-          } else {
-            console.log("No Profile Picture Found in the Response");
-          }
-
-          if (
-            savedLocationsResponse.data &&
-            savedLocationsResponse.data.length > 0
-          ) {
-            const savedLocationsData = savedLocationsResponse.data.map(
-              (location) => ({
-                value: location,
-                label: location,
-              })
-            );
-            setSavedLocations(savedLocationsData);
-          } else {
-            console.log("No Saved Locations Found in the Response");
-          }
-
-          setLoading(false);
+        if (profileResponse.data && profileResponse.data.profilePicture) {
+          const imageDataUri = `data:${
+            profileResponse.data.profilePicture.contentType
+          };base64,${profileResponse.data.profilePicture.data.toString(
+            "base64"
+          )}`;
+          setSavedImage(imageDataUri);
         }
+
+        if (
+          savedLocationsResponse.data &&
+          savedLocationsResponse.data.length > 0
+        ) {
+          const savedLocationsData = savedLocationsResponse.data.map(
+            (location) => ({
+              value: location,
+              label: location,
+            })
+          );
+          setSavedLocations(savedLocationsData);
+        }
+
+        setLoading(false);
       } catch (error) {
-        console.error(
-          "Failed to fetch user data:",
-          error.response?.data?.message
-        );
+        console.error("Failed to fetch user data:", error.response?.data?.message);
       }
     };
 
     fetchData();
-
-    return () => {
-      isMounted = false;
-    };
   }, [navigate]);
 
   useEffect(() => {
     if (userData) {
-      console.log("Logged-in user ID:", userData.userId);
       setUserId(userData.userId);
     }
   }, [userData]);
@@ -172,7 +152,6 @@ const ProfileEdWidget = ({ onClose }) => {
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
-      console.log("Username sent in request body:", username);
       formData.append("bio", bio);
       formData.append("firstName", firstName);
       formData.append("lastName", lastName);

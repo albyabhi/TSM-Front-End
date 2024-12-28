@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -15,7 +15,7 @@ import {
   IconButton,
   Zoom,
   CircularProgress,
-  Slide
+  Slide,
 } from "@mui/material";
 import axios from "axios";
 import { theme } from "./theme";
@@ -24,7 +24,6 @@ import { ArrowBack } from "@mui/icons-material";
 const SearchAppBar = ({ onSearch, selectedCategory }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [placeholderText, setPlaceholderText] = useState("");
-  const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     // Set placeholder text based on the selected tab
@@ -84,8 +83,6 @@ const SearchAppBar = ({ onSearch, selectedCategory }) => {
 };
 
 const SearchResultItem = ({ userId, username, profilePicture, onClick }) => {
-  console.log("userId:", userId); // Log the userId
-
   return (
     <Slide direction="down" in={true} timeout={500}>
       <Box
@@ -120,13 +117,12 @@ const SearchResultItem = ({ userId, username, profilePicture, onClick }) => {
 };
 
 const LocationSearchResultItem = ({ locationId, locationName, image, onClick }) => {
-  
   const [show, setShow] = React.useState(false);
 
   React.useEffect(() => {
     setShow(true);
   }, []);
-  
+
   return (
     <Slide direction="down" in={show} timeout={500} mountOnEnter unmountOnExit>
       <Box
@@ -140,7 +136,7 @@ const LocationSearchResultItem = ({ locationId, locationName, image, onClick }) 
         my={2}
         onClick={() => onClick(locationId)}
         style={{
-          cursor: 'pointer',
+          cursor: "pointer",
           backgroundImage: image ? `url(data:${image.contentType};base64,${image.data})` : 'none', // Set background image
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -176,7 +172,7 @@ const TravelGuideSearchResultItem = ({
   const [profilePicture, setProfilePicture] = useState("");
   const [numDays, setNumDays] = useState(0);
   const [loading, setLoading] = useState(false);
-  
+
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true); // Set loading to true before fetching
@@ -216,8 +212,6 @@ const TravelGuideSearchResultItem = ({
     };
     setNumDays(countDays());
   }, [itinerary]);
- 
-  console.log(numDays);
 
   return (
     <Zoom in={true}>
@@ -229,7 +223,7 @@ const TravelGuideSearchResultItem = ({
           padding: "16px",
         }}
       >
-        {loading ? ( // Display circular loading when loading state is true
+        {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="150px">
             <CircularProgress />
           </Box>
@@ -312,6 +306,7 @@ const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (!token) {
@@ -319,42 +314,33 @@ const Search = () => {
     }
   }, [navigate, token]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        let response;
-        const apiUrl = process.env.REACT_APP_API_URL;
-        if (selectedCategory === "Users") {
-          response = await axios.get(
-            `${apiUrl}/api/users/search?username=${searchQuery}`
-          );
-        } else if (selectedCategory === "Locations") {
-          response = await axios.get(
-            `${apiUrl}/map/locations/search?locationName=${searchQuery}`
-          );
-          console.log(response.data);
-        } else if (selectedCategory === "Travel Guides") {
-          response = await axios.get(
-            `${apiUrl}/tg/search?destinationName=${searchQuery}`
-          );
-          console.log("Travel Guides Data:", response.data);
-        }
-        const searchResultsArray = Array.isArray(response.data)
-          ? response.data
-          : [response.data];
-        setSearchResults(searchResultsArray);
-      } catch (error) {
-        console.error("Error fetching search results:", error);
-        setSearchResults([]);
+  const fetchData = useCallback(async () => {
+    try {
+      let response;
+      if (selectedCategory === "Users") {
+        response = await axios.get(`${apiUrl}/api/users/search?username=${searchQuery}`);
+      } else if (selectedCategory === "Locations") {
+        response = await axios.get(`${apiUrl}/map/locations/search?locationName=${searchQuery}`);
+      } else if (selectedCategory === "Travel Guides") {
+        response = await axios.get(`${apiUrl}/tg/search?destinationName=${searchQuery}`);
       }
-    };
+      const searchResultsArray = Array.isArray(response.data)
+        ? response.data
+        : [response.data];
+      setSearchResults(searchResultsArray);
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+      setSearchResults([]);
+    }
+  }, [selectedCategory, searchQuery, apiUrl]);
 
+  useEffect(() => {
     if (searchQuery) {
       fetchData();
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, fetchData]);
 
   const handleCategoryChange = (event, newValue) => {
     setSelectedCategory(newValue);
@@ -426,19 +412,9 @@ const Search = () => {
                 key={guide._id}
                 userId={guide.userId}
                 guideId={guide._id}
-                title={
-                  guide.featureDestination ? guide.featureDestination.name : " "
-                }
-                description={
-                  guide.featureDestination
-                    ? guide.featureDestination.description
-                    : ""
-                }
-                image={
-                  guide.featureDestination
-                    ? guide.featureDestination.image
-                    : null
-                }
+                title={guide.featureDestination ? guide.featureDestination.name : " "}
+                description={guide.featureDestination ? guide.featureDestination.description : ""}
+                image={guide.featureDestination ? guide.featureDestination.image : null}
                 itinerary={guide.itinerary}
               />
             ))}

@@ -7,7 +7,6 @@ import locationIcon from "./Icons/location.png";
 import {
   AppBar,
   Avatar,
-  Badge,
   Box,
   InputBase,
   Toolbar,
@@ -57,9 +56,7 @@ const Navbar = () => {
   const [isAddPostVisible, setAddPostVisibility] = useState(false);
   const [isProfileWidgetVisible, setProfileWidgetVisibility] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null); // State for account menu anchor element
-  const [userProfile, setUserProfile] = useState(null);
   const [profilePicture, setProfilePicture] = useState(null);
-  const [username, setUsername] = useState('');
   const apiUrl = process.env.REACT_APP_API_URL;
   const isXsOrSm = useMediaQuery((theme) => theme.breakpoints.down("sm"));
   const navigate = useNavigate();
@@ -68,27 +65,16 @@ const Navbar = () => {
     const getUser = async () => {
       try {
         const token = localStorage.getItem("token");
-
-        const [userResponse, profileResponse] = await Promise.all([
-          axios.get(`${apiUrl}/api/profile`, { headers: { Authorization: token } }),
+        const [profileResponse] = await Promise.all([
           axios.get(`${apiUrl}/api/profiledata`, { headers: { Authorization: token } }),
         ]);
-
-        const userData = userResponse.data;
         const profileData = profileResponse.data;
-
-        const userProfile = {
-          username: userData.username,
-          profilePicture: profileData?.profilePicture || null,
-        };
-        setUsername(userProfile.username);
-        setUserProfile(userProfile);
         setProfilePicture(profileData?.profilePicture || null);
       } catch (error) {
         console.error("Error fetching user profile:", error);
       }
     };
-
+  
     getUser();
   }, [apiUrl]);
 

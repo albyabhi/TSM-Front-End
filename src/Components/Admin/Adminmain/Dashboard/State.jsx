@@ -22,7 +22,6 @@ import Navbar from "../Dashboard/Navbar";
 import axios from "axios";
 
 const State = () => {
-  const [nation, setNation] = useState("");
   const [state, setState] = useState("");
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -31,12 +30,11 @@ const State = () => {
   const [selectedNation, setSelectedNation] = useState("default");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Fetch Nations
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const nationResponse = await axios.get(
-          `${API_BASE_URL}/map/fetchnations`
-        );
+        const nationResponse = await axios.get(`${API_BASE_URL}/map/fetchnations`);
         setNations(nationResponse.data);
       } catch (error) {
         console.error(
@@ -45,12 +43,13 @@ const State = () => {
         );
       }
     };
-
     fetchData();
-  }, []);
+  }, [API_BASE_URL]);
 
+  // Fetch States when selectedNation changes
   useEffect(() => {
     const fetchStates = async () => {
+      if (selectedNation === "default") return; // Avoid unnecessary fetch for default value
       try {
         const stateResponse = await axios.get(
           `${API_BASE_URL}/map/fetchstates?nation=${selectedNation}`
@@ -63,30 +62,10 @@ const State = () => {
         );
       }
     };
-
     fetchStates();
-  }, [selectedNation]);
+  }, [selectedNation, API_BASE_URL]);
 
-  const handleNationSave = async () => {
-    try {
-      const nationResponse = await axios.post(
-        `${API_BASE_URL}/map/nations`,
-        { name: nation }
-      );
-      setSelectedNation(nationResponse.data._id);
-      console.log("Country saved successfully:", nationResponse.data);
-    } catch (error) {
-      if (error.response && error.response.status === 409) {
-        setErrorMessage("Country already exists");
-      } else {
-        console.error(
-          "Error saving country:",
-          error.response ? error.response.data.message : error.message
-        );
-      }
-    }
-  };
-
+  // Handle Save State
   const handleStateSave = async () => {
     try {
       const stateResponse = await axios.post(
@@ -110,6 +89,7 @@ const State = () => {
     }
   };
 
+  // Handle Delete State
   const handleDeleteState = async (stateId) => {
     try {
       const response = await axios.delete(
@@ -141,7 +121,6 @@ const State = () => {
             </div>
           )}
           <br />
-
           <InputLabel>Select Country</InputLabel>
 
           <Select

@@ -4,7 +4,6 @@ import { PostAdd, Cancel } from "@mui/icons-material";
 import { styled } from "@mui/system";
 import WidgetWrapper from "../Props/WidgetWrapper";
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 import { LocationAddform } from "../LocationAddform";
 
 const StyledFileInput = styled(Input)(({ theme }) => ({
@@ -21,7 +20,6 @@ const Addpost = ({ onClose }) => {
   const [postMessage, setPostMessage] = useState(null);
   const [profilePicture, setProfilePicture] = useState(null);
   const [locationOptions, setLocationOptions] = useState([]);
-  const navigate = useNavigate();
 
   const fetchLocations = async () => {
     try {
@@ -47,13 +45,6 @@ const Addpost = ({ onClose }) => {
 
         const userData = userResponse.data;
         const profileData = profileResponse.data;
-
-        const userProfile = {
-          userId: userData._id,
-          username: userData.username,
-          bio: profileData?.bio || '',
-          profilePicture: profileData?.profilePicture || null,
-        };
 
         setProfilePicture(profileData?.profilePicture || null);
         setFormData((prevData) => ({

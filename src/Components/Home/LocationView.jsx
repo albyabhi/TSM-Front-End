@@ -1,61 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Grid, Typography, CircularProgress } from '@mui/material';
-import { styled } from '@mui/system';
 import PostWidget from './Widgets/PostWidget';
 import Navbar from './Navbar';
-import { useNavigate } from 'react-router-dom';
 
 // Styled Typography component for location title
-const LocationTitle = styled(Typography)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
-  textAlign: 'center',
-}));
+
 
 const LocationView = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { locationId } = useParams();
   const navigate = useNavigate();
-  const apiUrl = process.env.REACT_APP_API_URL; // Using dynamic API URL
+  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000'; // Ensure a fallback API URL
 
   const token = localStorage.getItem('token');
 
+  // Redirect to login if no token exists
   useEffect(() => {
     if (!token) {
       navigate('/login');
     }
   }, [navigate, token]);
 
+  // Fetch posts for a specific location
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/posts/location/${locationId}`); // Using dynamic API URL
+        const response = await axios.get(`${apiUrl}/posts/location/${locationId}`); // Dynamic API URL
         setPosts(response.data);
-        setLoading(false); // Set loading to false when data is fetched
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching posts:', error);
-        setLoading(false); // Set loading to false in case of error
+        setLoading(false); // Set loading to false if there's an error
       }
     };
 
-    fetchPosts();
-  }, [locationId, apiUrl]); // Make sure apiUrl is included as dependency
+    if (locationId) {
+      fetchPosts(); // Fetch posts if locationId is available
+    }
+  }, [locationId, apiUrl]); // Dependencies: locationId and apiUrl
 
   return (
-    <div >
-      {/* Display location name instead of ID */}
+    <div>
+      {/* Render Navbar */}
       <Navbar />
       <div style={{ marginTop: '20px' }}>
-        {loading ? ( // Display CircularProgress if loading is true
+        {loading ? ( // Display CircularProgress while loading
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
             <CircularProgress sx={{ color: 'black' }} />
           </div>
         ) : (
           <Grid container spacing={2} justifyContent="center">
             {posts.length === 0 ? (
-              <Typography variant="body1" align="center">No post posted on this Location</Typography>
+              <Typography variant="body1" align="center">No posts found for this location</Typography>
             ) : (
               // Map through the posts array and render PostWidget for each post
               posts.map((post) => (
